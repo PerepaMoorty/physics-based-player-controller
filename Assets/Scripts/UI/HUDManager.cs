@@ -30,7 +30,7 @@ public class HUDManager : MonoBehaviour
         _playerOnWall = playerController._OnWall ? "Yes" : "No";
         onWallText.text = "On Wall: " + _playerOnWall;
 
-        _slopeAngle = Vector3.Angle(Vector3.up, playerController._SlopeNormal);
+        _slopeAngle = Vector3.Angle(Vector3.up, playerController._ContactAngle);
         slopeAngleText.text = String.Format("Slope Angle: {0:0.00}°", _slopeAngle);
     }
 }

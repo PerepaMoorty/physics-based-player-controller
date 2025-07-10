@@ -1,4 +1,5 @@
 using Unity.Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -20,36 +21,34 @@ public class MovementController : MonoBehaviour
     [SerializeField] private float moveSpeed;
     [SerializeField] private float counterMoveSpeed;
     [SerializeField] private float frictionValue;
-    [HideInInspector] public Vector2 _MoveInputVector;
     private float _groundAirMoveMultiplier = 1f;
     private float _counterMoveMultiplier = 1f;
     private float _fricitionMultiplier = 1f;
     private Vector2 _relativeVelocity;
+    [HideInInspector] public Vector2 _MoveInputVector;
 
     [Header("Grounded Checks")]
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private float groundedRayLength;
     [HideInInspector] public bool _IsGrounded;
 
     [Header("Slope Angles / Extra Gravity")]
     [SerializeField] private float maxSlopeAngle;
     [SerializeField] private float extraGravityForce;
     [SerializeField] private float groundGravityMultiplier;
-    [HideInInspector] public Vector3 _SlopeNormal;
+    private Vector3 _groundNormal;
     private float _gravityToggle = 1f;
+    [HideInInspector] public Vector3 _ContactAngle;
 
     [Header("Jumping")]
     [SerializeField] private float jumpForce;
     [SerializeField] private float slopeJumpMultipler;
-    [HideInInspector] public float _JumpKeyPressed;
     private bool _readyToJump = true;
+    [HideInInspector] public float _JumpKeyPressed;
     
-    // Idk why the _cancelGrounded Flag exists, code works without it, But just incase
-    //private bool _cancelGrounded;
-
     [Header("Camera Effects")]
     [SerializeField] private float wallCameraLeanAngle;
     [SerializeField] private float _cameraLeanLerpTime;
+    [SerializeField] private float _resetCamLeanMultiplier;
     private float _floatWallDirectionRelative;
     private bool _leanCameraNow;
 
@@ -57,17 +56,15 @@ public class MovementController : MonoBehaviour
     [SerializeField] private float minWallAngle;
     [SerializeField] private float wallStickForce;
     [SerializeField] private float wallJumpForce;
-    [HideInInspector] public bool _OnWall;
+    [SerializeField] private float minWallRunSpeed;
     private Vector3 _wallNormal;
     private bool _readyToJumpOffWall = true;
+    [HideInInspector] public bool _OnWall;
 
     [Header("Wall Running Multiplers")]
     [SerializeField] private float _offTheWallMul;
     [SerializeField] private float _forwardOffTheWallMul;
     [SerializeField] private float _upwardOffTheWallMul;
-
-    [Header("Sprinting")]
-    [HideInInspector] public float _RunKeyPressed;
 
     private void Awake()
     {
@@ -85,7 +82,7 @@ public class MovementController : MonoBehaviour
         _floatWallDirectionRelative = (_wallNormal.y > 0f ? 1f : -1f);
         cameraRecomposer.Dutch = _leanCameraNow ? 
             Mathf.Lerp(cameraRecomposer.Dutch, wallCameraLeanAngle * _floatWallDirectionRelative, _cameraLeanLerpTime) : 
-            Mathf.Lerp(cameraRecomposer.Dutch, 0f, _cameraLeanLerpTime);
+            Mathf.Lerp(cameraRecomposer.Dutch, 0f, _cameraLeanLerpTime * _resetCamLeanMultiplier);
     }
     private void FixedUpdate()
     {
@@ -99,8 +96,7 @@ public class MovementController : MonoBehaviour
         if(_JumpKeyPressed != 0f)
             BasicJump();
 
-        //if (_RunKeyPressed != 0f)
-            WallRun();
+        WallRun();
     }
     
     // Movement
@@ -114,14 +110,14 @@ public class MovementController : MonoBehaviour
     }
     private void BasicMovement()
     {
-        _groundAirMoveMultiplier = _IsGrounded ? 1f : 0.4f;
+        _groundAirMoveMultiplier = _IsGrounded ? 1f : 0.6f;
 
         playerBody.AddForce(transform.forward * _MoveInputVector.y * moveSpeed * _groundAirMoveMultiplier * Time.fixedDeltaTime, ForceMode.Acceleration);
         playerBody.AddForce(transform.right * _MoveInputVector.x * moveSpeed * _groundAirMoveMultiplier * Time.fixedDeltaTime, ForceMode.Acceleration);
     }
     private void CounterMovement()
     {
-        _counterMoveMultiplier = _IsGrounded ? 1f : 0.2f;
+        _counterMoveMultiplier = _IsGrounded ? 1f : 0.45f;
 
         if ((_relativeVelocity.x < -0.01f && _MoveInputVector.x > 0f) || (_relativeVelocity.x > 0.01f && _MoveInputVector.x < 0f))
             playerBody.AddForce(transform.right * -_relativeVelocity.x * counterMoveSpeed * _counterMoveMultiplier * Time.fixedDeltaTime);
@@ -131,7 +127,7 @@ public class MovementController : MonoBehaviour
     private void SimulateFriction()
     {
         // Ground and Air Friction
-        _fricitionMultiplier = _IsGrounded ? 1f : 0.6f;
+        _fricitionMultiplier = _IsGrounded ? 1f : 0.75f;
 
         if ((Mathf.Abs(_relativeVelocity.x) > 0.01f && Mathf.Abs(_MoveInputVector.x) < 0.05f))
             playerBody.AddForce(transform.right * -_relativeVelocity.x * frictionValue * _fricitionMultiplier * Time.fixedDeltaTime);
@@ -156,12 +152,13 @@ public class MovementController : MonoBehaviour
 
         for (int i = 0; i < collision.contactCount; i++)
         {
+            if(!isWall(collision.GetContact(i).normal))
+                _ContactAngle = collision.GetContact(i).normal;
+
             if (isFloor(collision.GetContact(i).normal))
             {
-                // Idk why the _cancelGrounded Flag exists, code works without it, But just incase
                 _IsGrounded = true;
-                //_cancelGrounded = false;
-                _SlopeNormal = collision.GetContact(i).normal;
+                _groundNormal = collision.GetContact(i).normal;
                 CancelInvoke(nameof(StopGrounded));
             }
             else if(isWall(collision.GetContact(i).normal))
@@ -173,10 +170,7 @@ public class MovementController : MonoBehaviour
         }
 
         if(_IsGrounded)
-        {
-            //_cancelGrounded = true;
             Invoke(nameof(StopGrounded), Time.deltaTime * 3f);
-        }
         
         if(_OnWall) Invoke(nameof(StopOnWall), Time.deltaTime * 3f);
     }
@@ -191,7 +185,7 @@ public class MovementController : MonoBehaviour
             _readyToJump = false;
 
             playerBody.AddForce(Vector3.up * jumpForce * Time.fixedDeltaTime, ForceMode.Impulse);
-            playerBody.AddForce(_SlopeNormal * jumpForce * slopeJumpMultipler * Time.fixedDeltaTime, ForceMode.Impulse);
+            playerBody.AddForce(_groundNormal * jumpForce * slopeJumpMultipler * Time.fixedDeltaTime, ForceMode.Impulse);
             
             ResetYVelocity();
         }
@@ -207,13 +201,21 @@ public class MovementController : MonoBehaviour
         if (_OnWall && !_IsGrounded)
         {
             _leanCameraNow = true;
-            _gravityToggle = 0.1f;
+            _gravityToggle = playerBody.linearVelocity.magnitude >= minWallRunSpeed ? 0.25f : 0.75f;
 
             if (_JumpKeyPressed != 0f)
+            {
                 JumpOffWall();
+                return;
+            }
 
             // Adding Extra Forces - Player Sticks to the Wall
-            playerBody.AddForce(VectorDirection(cameraOrientation.forward, _wallNormal) * wallStickForce * Time.fixedDeltaTime, ForceMode.Force);
+            playerBody.AddForce(VectorDirection(cameraOrientation.forward, _wallNormal) 
+                * (new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z).magnitude >= 1f 
+                ? 1f : new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z).magnitude) 
+                * wallStickForce 
+                * Time.fixedDeltaTime, 
+                ForceMode.Force);
         }
         else
         {
@@ -228,15 +230,24 @@ public class MovementController : MonoBehaviour
         {
             _readyToJumpOffWall = false;
 
-            // Horizontal
+            // Off the Walls
             playerBody.AddForce(VectorDirection(_wallNormal, cameraOrientation.forward) * wallJumpForce * _offTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
-            
+
             // Forward
-            playerBody.AddForce(cameraOrientation.forward * wallJumpForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+            Vector3 _horizontalForward = new Vector3(cameraOrientation.forward.x, 0f, cameraOrientation.forward.z);
+            playerBody.AddForce(_horizontalForward * wallJumpForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
             
             // Upward
-            ResetYVelocity();
-            playerBody.AddForce(Vector3.up * wallJumpForce * _upwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+            if(new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z).magnitude >= minWallRunSpeed)
+            {
+                ResetYVelocity();
+                playerBody.AddForce(Vector3.up * wallJumpForce * _upwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+                playerBody.AddForce(new Vector3(0f, cameraOrientation.forward.y, 0f) * wallJumpForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+            }
+        
+            if(_IsGrounded && playerBody.linearVelocity.magnitude <= minWallRunSpeed)
+                playerBody.AddForce(new Vector3(0f, cameraOrientation.forward.y, 0f) * wallJumpForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+
         }
     }
 

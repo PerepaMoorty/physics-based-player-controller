@@ -18,7 +18,6 @@ public class InputActions_Buffer : MonoBehaviour
     {
         _movementController._MoveInputVector = player_IA.Movement.Move.ReadValue<Vector2>();
         _movementController._JumpKeyPressed = player_IA.Movement.Jump.ReadValue<float>();
-        _movementController._RunKeyPressed = player_IA.Movement.Sprint.ReadValue<float>();
 
         if (Input.GetKeyDown(KeyCode.T))
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
