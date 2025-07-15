@@ -5,14 +5,18 @@ public class InputActions_Buffer : MonoBehaviour
 {
     [Header("References")]
     private MovementController _movementController;
+    private CursorControl _cursorController;
     private IA_Player player_IA;
 
     private void Start()
     {
         _movementController = GetComponent<MovementController>();
+        _cursorController = GetComponent<CursorControl>();
 
         player_IA = new IA_Player();
         player_IA.Movement.Enable();
+
+        player_IA.Movement.Unlock_Cursor.performed += _cursorController.ToggleCursorLockState;
     }
     private void Update()
     {

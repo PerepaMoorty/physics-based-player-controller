@@ -1,5 +1,4 @@
 using Unity.Cinemachine;
-using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -12,59 +11,65 @@ using UnityEngine;
 public class MovementController : MonoBehaviour
 {
     [Header("References")]
+    // ...
     [SerializeField] private Rigidbody playerBody;
     [SerializeField] private Transform cameraOrientation;
     [SerializeField] private CinemachineRecomposer cameraRecomposer;
 
     [Header("Basic Movement Variables")]
-    [SerializeField] private float maxSpeed;
-    [SerializeField] private float moveSpeed;
-    [SerializeField] private float counterMoveSpeed;
-    [SerializeField] private float frictionValue;
+    public float maxSpeed;
+    public float moveSpeed;
+    public float counterMoveSpeed;
+    public float frictionValue;
+    // ... 
     private float _groundAirMoveMultiplier = 1f;
     private float _counterMoveMultiplier = 1f;
     private float _fricitionMultiplier = 1f;
-    private Vector2 _relativeVelocity;
+    [HideInInspector] public Vector2 _RelativeVelocity;
     [HideInInspector] public Vector2 _MoveInputVector;
 
     [Header("Grounded Checks")]
+    // ...
     [SerializeField] private LayerMask groundLayer;
     [HideInInspector] public bool _IsGrounded;
 
     [Header("Slope Angles / Extra Gravity")]
+    public float extraGravityForce;
+    public float groundGravityMultiplier;
+    // ...
     [SerializeField] private float maxSlopeAngle;
-    [SerializeField] private float extraGravityForce;
-    [SerializeField] private float groundGravityMultiplier;
     private Vector3 _groundNormal;
     private float _gravityToggle = 1f;
     [HideInInspector] public Vector3 _ContactAngle;
 
     [Header("Jumping")]
-    [SerializeField] private float jumpForce;
-    [SerializeField] private float slopeJumpMultipler;
+    public float jumpForce;
+    public float slopeJumpMultipler;
+    // ...
     private bool _readyToJump = true;
     [HideInInspector] public float _JumpKeyPressed;
     
     [Header("Camera Effects")]
-    [SerializeField] private float wallCameraLeanAngle;
-    [SerializeField] private float _cameraLeanLerpTime;
-    [SerializeField] private float _resetCamLeanMultiplier;
+    public float wallCameraLeanAngle;
+    public float _cameraLeanLerpTime;
+    public float _resetCamLeanMultiplier;
+    // ...
     private float _floatWallDirectionRelative;
     private bool _leanCameraNow;
 
     [Header("Wall Running")]
-    [SerializeField] private float minWallAngle;
-    [SerializeField] private float wallStickForce;
-    [SerializeField] private float wallJumpForce;
+    public float wallStickForce;
+    // ...
     [SerializeField] private float minWallRunSpeed;
+    [SerializeField] private float minWallAngle;
     private Vector3 _wallNormal;
     private bool _readyToJumpOffWall = true;
     [HideInInspector] public bool _OnWall;
 
     [Header("Wall Running Multiplers")]
-    [SerializeField] private float _offTheWallMul;
-    [SerializeField] private float _forwardOffTheWallMul;
-    [SerializeField] private float _upwardOffTheWallMul;
+    public float _offTheWallMul;
+    public float _forwardOffTheWallMul;
+    public float _upwardOffTheWallMul;
 
     private void Awake()
     {
@@ -86,8 +91,8 @@ public class MovementController : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        _relativeVelocity = FindVelocity_RelativeDirection(transform, playerBody);
-        LimitMaxVelocity(_relativeVelocity);
+        _RelativeVelocity = FindVelocity_RelativeDirection(transform, playerBody);
+        LimitMaxVelocity(_RelativeVelocity);
         BasicMovement();
         SimulateFriction();
         CounterMovement();
@@ -119,20 +124,20 @@ public class MovementController : MonoBehaviour
     {
         _counterMoveMultiplier = _IsGrounded ? 1f : 0.45f;
 
-        if ((_relativeVelocity.x < -0.01f && _MoveInputVector.x > 0f) || (_relativeVelocity.x > 0.01f && _MoveInputVector.x < 0f))
-            playerBody.AddForce(transform.right * -_relativeVelocity.x * counterMoveSpeed * _counterMoveMultiplier * Time.fixedDeltaTime);
-        if ((_relativeVelocity.y < -0.01f && _MoveInputVector.y > 0f) || (_relativeVelocity.y > 0.01f && _MoveInputVector.y < 0f))
-            playerBody.AddForce(transform.forward * -_relativeVelocity.y * counterMoveSpeed * _counterMoveMultiplier * Time.fixedDeltaTime);
+        if ((_RelativeVelocity.x < -0.01f && _MoveInputVector.x > 0f) || (_RelativeVelocity.x > 0.01f && _MoveInputVector.x < 0f))
+            playerBody.AddForce(transform.right * -_RelativeVelocity.x * counterMoveSpeed * _counterMoveMultiplier * Time.fixedDeltaTime);
+        if ((_RelativeVelocity.y < -0.01f && _MoveInputVector.y > 0f) || (_RelativeVelocity.y > 0.01f && _MoveInputVector.y < 0f))
+            playerBody.AddForce(transform.forward * -_RelativeVelocity.y * counterMoveSpeed * _counterMoveMultiplier * Time.fixedDeltaTime);
     }
     private void SimulateFriction()
     {
         // Ground and Air Friction
         _fricitionMultiplier = _IsGrounded ? 1f : 0.75f;
 
-        if ((Mathf.Abs(_relativeVelocity.x) > 0.01f && Mathf.Abs(_MoveInputVector.x) < 0.05f))
-            playerBody.AddForce(transform.right * -_relativeVelocity.x * frictionValue * _fricitionMultiplier * Time.fixedDeltaTime);
-        if ((Mathf.Abs(_relativeVelocity.y) > 0.01f && Mathf.Abs(_MoveInputVector.y) < 0.05f))
-            playerBody.AddForce(transform.forward * -_relativeVelocity.y * frictionValue * _fricitionMultiplier * Time.fixedDeltaTime);
+        if ((Mathf.Abs(_RelativeVelocity.x) > 0.01f && Mathf.Abs(_MoveInputVector.x) < 0.05f))
+            playerBody.AddForce(transform.right * -_RelativeVelocity.x * frictionValue * _fricitionMultiplier * Time.fixedDeltaTime);
+        if ((Mathf.Abs(_RelativeVelocity.y) > 0.01f && Mathf.Abs(_MoveInputVector.y) < 0.05f))
+            playerBody.AddForce(transform.forward * -_RelativeVelocity.y * frictionValue * _fricitionMultiplier * Time.fixedDeltaTime);
     }
     private void AdditionalGravity()
     {
@@ -231,22 +236,22 @@ public class MovementController : MonoBehaviour
             _readyToJumpOffWall = false;
 
             // Off the Walls
-            playerBody.AddForce(VectorDirection(_wallNormal, cameraOrientation.forward) * wallJumpForce * _offTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+            playerBody.AddForce(VectorDirection(_wallNormal, cameraOrientation.forward) * wallStickForce * _offTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
 
             // Forward
             Vector3 _horizontalForward = new Vector3(cameraOrientation.forward.x, 0f, cameraOrientation.forward.z);
-            playerBody.AddForce(_horizontalForward * wallJumpForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+            playerBody.AddForce(_horizontalForward * wallStickForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
             
             // Upward
             if(new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z).magnitude >= minWallRunSpeed)
             {
                 ResetYVelocity();
-                playerBody.AddForce(Vector3.up * wallJumpForce * _upwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
-                playerBody.AddForce(new Vector3(0f, cameraOrientation.forward.y, 0f) * wallJumpForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+                playerBody.AddForce(Vector3.up * wallStickForce * _upwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+                playerBody.AddForce(new Vector3(0f, cameraOrientation.forward.y, 0f) * wallStickForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
             }
         
             if(_IsGrounded && playerBody.linearVelocity.magnitude <= minWallRunSpeed)
-                playerBody.AddForce(new Vector3(0f, cameraOrientation.forward.y, 0f) * wallJumpForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+                playerBody.AddForce(new Vector3(0f, cameraOrientation.forward.y, 0f) * wallStickForce * _forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
 
         }
     }
