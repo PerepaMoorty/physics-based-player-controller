@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: cdbb40e11399e4a17882ada20a1b896a, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: ed1387202b1349540a5d6464f0f27488, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -733,7 +733,7 @@ MonoBehaviour:
   slopeJumpMultipler: 0.33
   _JumpKeyPressed: 0
   wallCameraLeanAngle: 15
-  _cameraLeanLerpTime: 0.06
+  _cameraLeanLerpTime: 0.03
   _resetCamLeanMultiplier: 1.2
   wallStickForce: 1200
   minWallRunSpeed: 10
