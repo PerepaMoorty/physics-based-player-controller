@@ -103,7 +103,8 @@ public class MovementController : MonoBehaviour
     private void FixedUpdate()
     {
         _relativeVelocity = FindVelocity_RelativeDirection(transform, playerBody);
-        LimitMaxVelocity(_relativeVelocity);
+        
+        LimitMaxVelocity();
         BasicMovement();
         SimulateFriction();
         CounterMovement();
@@ -116,7 +117,7 @@ public class MovementController : MonoBehaviour
     }
     
     // Movement
-    private void LimitMaxVelocity(Vector2 _relativeVelocity)
+    private void LimitMaxVelocity()
     {
         // Max Speed Limit - rejects input if the speed of the player is past the maxSpeed
         if (MoveInputVector.x > 0f && _relativeVelocity.x > maxSpeed) MoveInputVector.x = 0f;
@@ -184,7 +185,7 @@ public class MovementController : MonoBehaviour
             else if(isWall(collision.GetContact(i).normal))
             {
                 OnWall = true;
-                _wallNormal = VectorDirection(cameraOrientation.forward, collision.GetContact(i).normal);
+                _wallNormal = CrossVectorDirection(cameraOrientation.forward, collision.GetContact(i).normal);
                 CancelInvoke(nameof(StopOnWall));
             }
         }
@@ -220,8 +221,10 @@ public class MovementController : MonoBehaviour
     {
         if (OnWall && !IsGrounded)
         {
+            // Gravity Reduction depending on speed on the wall
+            _gravityToggle = playerBody.linearVelocity.magnitude >= minWallRunSpeed ? 0.4f : 0.8f;
+
             _leanCameraNow = true;
-            _gravityToggle = playerBody.linearVelocity.magnitude >= minWallRunSpeed ? 0.25f : 0.75f;
 
             if (JumpKeyPressed != 0f)
             {
@@ -229,13 +232,7 @@ public class MovementController : MonoBehaviour
                 return;
             }
 
-            // Adding Extra Forces - Player Sticks to the Wall
-            playerBody.AddForce(VectorDirection(cameraOrientation.forward, _wallNormal) 
-                * (new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z).magnitude >= 1f 
-                ? 1f : new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z).magnitude) 
-                * wallStickForce 
-                * Time.fixedDeltaTime, 
-                ForceMode.Force);
+            StickToWall();
         }
         else
         {
@@ -244,6 +241,16 @@ public class MovementController : MonoBehaviour
             _readyToJumpOffWall = true;
         }
     }
+    private void StickToWall()
+    {
+        // Calculating the X and Z COmponent Magnitude to map a dependency of the player velocity to the stick-ing force
+        float _horizontalVelocityVectorMagnitude = new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z).magnitude;
+        float _speedDependency = _horizontalVelocityVectorMagnitude >= minWallRunSpeed ? 1f : _horizontalVelocityVectorMagnitude;
+
+        // Calculating the Final Force Vector
+        Vector3 _finalStickingForce = CrossVectorDirection(cameraOrientation.forward, _wallNormal) * _speedDependency * wallStickForce * Time.fixedDeltaTime;
+        playerBody.AddForce(_finalStickingForce, ForceMode.Force);
+    }
     private void JumpOffWall()
     {
         if(_readyToJumpOffWall)
@@ -251,7 +258,7 @@ public class MovementController : MonoBehaviour
             _readyToJumpOffWall = false;
 
             // Off the Walls
-            playerBody.AddForce(VectorDirection(_wallNormal, cameraOrientation.forward) * wallStickForce * offTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
+            playerBody.AddForce(CrossVectorDirection(_wallNormal, cameraOrientation.forward) * wallStickForce * offTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
 
             // Forward
             Vector3 _horizontalForward = new Vector3(cameraOrientation.forward.x, 0f, cameraOrientation.forward.z);
@@ -295,7 +302,7 @@ public class MovementController : MonoBehaviour
         float angle = Vector3.Angle(Vector3.up, _vector);
         return angle > minWallAngle;
     }
-    private Vector3 VectorDirection(Vector3 _referenceVector, Vector3 _checkVector)
+    private Vector3 CrossVectorDirection(Vector3 _referenceVector, Vector3 _checkVector)
     {
         Vector3 _referenceVector_Corrected = new Vector3(_referenceVector.x, 0f, _referenceVector.z);
         Vector3 _checkVectorCorrected = new Vector3(_checkVector.x, 0f, _checkVector.z);
@@ -306,7 +313,7 @@ public class MovementController : MonoBehaviour
     }
     private void ResetYVelocity()
     {
-        if (playerBody.linearVelocity.y < 0.01f)
+        if (playerBody.linearVelocity.y <= 0f)
             playerBody.linearVelocity = new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z);
     }
 }

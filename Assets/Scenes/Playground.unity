@@ -716,32 +716,31 @@ MonoBehaviour:
   moveSpeed: 1500
   counterMoveSpeed: 150
   frictionValue: 100
-  _RelativeVelocity: {x: 0, y: 0}
-  _MoveInputVector: {x: 0, y: 0}
-  _airMoveMultipler: 0.6
-  _counterAirMoveMultipler: 0.45
-  _airFrictionMultipler: 0.75
+  MoveInputVector: {x: 0, y: 0}
+  airMoveMultipler: 0.6
+  counterAirMoveMultipler: 0.45
+  airFrictionMultipler: 0.75
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  _IsGrounded: 0
+  IsGrounded: 0
   extraGravityForce: 1200
   groundGravityMultiplier: 0.32
   maxSlopeAngle: 36
-  _ContactAngle: {x: 0, y: 0, z: 0}
+  ContactAngle: {x: 0, y: 0, z: 0}
   jumpForce: 700
   slopeJumpMultipler: 0.33
-  _JumpKeyPressed: 0
+  JumpKeyPressed: 0
   wallCameraLeanAngle: 15
-  _cameraLeanLerpTime: 0.03
-  _resetCamLeanMultiplier: 1.2
+  cameraLeanLerpTime: 0.03
+  resetCamLeanMultiplier: 1.2
   wallStickForce: 1200
-  minWallRunSpeed: 10
-  minWallAngle: 80
-  _OnWall: 0
-  _offTheWallMul: 0.75
-  _forwardOffTheWallMul: 0.45
-  _upwardOffTheWallMul: 0.5
+  minWallRunSpeed: 7.5
+  minWallAngle: 75
+  OnWall: 0
+  offTheWallMul: 0.75
+  forwardOffTheWallMul: 0.675
+  upwardOffTheWallMul: 0.6
 --- !u!54 &202184319
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -4105,6 +4104,89 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1067562873}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1082718921
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1082718922}
+  m_Layer: 5
+  m_Name: Interface
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1082718922
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082718921}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1132610649}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1132610648
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1132610649}
+  - component: {fileID: 1132610650}
+  m_Layer: 5
+  m_Name: Movement Info
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1132610649
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1132610648}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1082718922}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1132610650
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1132610648}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: a5cf40cda08d6b84da1230ed9aec94ea, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 892ceb74f6562f54fbcac7c90c1ef2ac, type: 3}
+  m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
 --- !u!1 &1157306818
 GameObject:
   m_ObjectHideFlags: 0
@@ -6586,7 +6668,7 @@ MonoBehaviour:
   ApplyAfter: 3
   Tilt: 0
   Pan: 0
-  Dutch: 2.338938e-31
+  Dutch: 0
   ZoomScale: 1
   FollowAttachment: 1
   LookAtAttachment: 1
@@ -7744,3 +7826,4 @@ SceneRoots:
   - {fileID: 1277135674}
   - {fileID: 1715912949}
   - {fileID: 202184316}
+  - {fileID: 1082718922}
