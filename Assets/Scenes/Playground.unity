@@ -739,8 +739,8 @@ MonoBehaviour:
   minWallAngle: 75
   OnWall: 0
   offTheWallMul: 0.75
-  forwardOffTheWallMul: 0.675
-  upwardOffTheWallMul: 0.6
+  forwardOffTheWallMul: 0.5
+  upwardOffTheWallMul: 0.5
 --- !u!54 &202184319
 Rigidbody:
   m_ObjectHideFlags: 0
