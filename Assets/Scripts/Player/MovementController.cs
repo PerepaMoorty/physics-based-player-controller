@@ -4,6 +4,10 @@ using UnityEngine;
 /// <summary>
 /// Physics-Based Player Movement Controller:
 /// 
+/// Pre-Requistes:
+/// - Cinemachine camera system (for camera dutch control)
+/// - DOTween library (for easing camera dutch)
+/// 
 /// A general use case 3D Physics based movement controller for games
 /// Features:
 /// - Basic Movement using the new Input system
@@ -40,7 +44,7 @@ public class MovementController : MonoBehaviour
     [Header("Grounded Checks")]
     // ...
     [SerializeField] private LayerMask groundLayer;
-    [HideInInspector] public bool IsGrounded;
+    [HideInInspector] public bool OnGround;
 
     [Header("Slope Angles / Extra Gravity")]
     [SerializeField] private float extraGravityForce;
@@ -64,12 +68,12 @@ public class MovementController : MonoBehaviour
     [SerializeField] private float resetCamLeanMultiplier;
     // ...
     private float _floatWallDirectionRelative;
-    private bool _leanCameraNow;
 
     [Header("Wall Running")]
     [SerializeField] private float wallStickForce;
     [SerializeField] private float minWallRunSpeed;
     [SerializeField] private float minWallAngle;
+    [SerializeField] private float maxWallAngle;
     // ...
     private Vector3 _wallNormal;
     private bool _readyToJumpOffWall = true;
@@ -84,7 +88,6 @@ public class MovementController : MonoBehaviour
     {
         // Initalising Component Values [This Controller requires the use of Cinemachine-Camera]
         cameraRecomposer.Dutch = 0f;
-        _leanCameraNow = false;
         _readyToJump = true;
         _readyToJumpOffWall = true;
     }
@@ -96,7 +99,7 @@ public class MovementController : MonoBehaviour
 
         // Camera Lean
         _floatWallDirectionRelative = (_wallNormal.y > 0f ? 1f : -1f);
-        cameraRecomposer.Dutch = _leanCameraNow ? 
+        cameraRecomposer.Dutch = OnWall && !OnGround ? 
             Mathf.Lerp(cameraRecomposer.Dutch, wallCameraLeanAngle * _floatWallDirectionRelative, cameraLeanLerpTime) : 
             Mathf.Lerp(cameraRecomposer.Dutch, 0f, cameraLeanLerpTime * resetCamLeanMultiplier);
     }
@@ -128,14 +131,14 @@ public class MovementController : MonoBehaviour
     private void BasicMovement()
     {
         // Air Movement Limiter
-        _groundAirMoveMultiplier = IsGrounded ? 1f : airMoveMultipler;
+        _groundAirMoveMultiplier = OnGround ? 1f : airMoveMultipler;
 
         playerBody.AddForce(transform.forward * MoveInputVector.y * moveSpeed * _groundAirMoveMultiplier * Time.fixedDeltaTime, ForceMode.Acceleration);
         playerBody.AddForce(transform.right * MoveInputVector.x * moveSpeed * _groundAirMoveMultiplier * Time.fixedDeltaTime, ForceMode.Acceleration);
     }
     private void CounterMovement()
     {
-        _counterMoveMultiplier = IsGrounded ? 1f : counterAirMoveMultipler;
+        _counterMoveMultiplier = OnGround ? 1f : counterAirMoveMultipler;
 
         if ((_relativeVelocity.x < -0.01f && MoveInputVector.x > 0f) || (_relativeVelocity.x > 0.01f && MoveInputVector.x < 0f))
             playerBody.AddForce(transform.right * -_relativeVelocity.x * counterMoveSpeed * _counterMoveMultiplier * Time.fixedDeltaTime);
@@ -145,7 +148,7 @@ public class MovementController : MonoBehaviour
     private void SimulateFriction()
     {
         // Ground and Air Friction
-        _fricitionMultiplier = IsGrounded ? 1f : airFrictionMultipler;
+        _fricitionMultiplier = OnGround ? 1f : airFrictionMultipler;
 
         if ((Mathf.Abs(_relativeVelocity.x) > 0.01f && Mathf.Abs(MoveInputVector.x) < 0.05f))
             playerBody.AddForce(transform.right * -_relativeVelocity.x * frictionValue * _fricitionMultiplier * Time.fixedDeltaTime);
@@ -155,7 +158,7 @@ public class MovementController : MonoBehaviour
     private void AdditionalGravity()
     {
         // Adding Different Values of Gravity depending on grounded-State
-        if (!IsGrounded)
+        if (!OnGround)
         {
             playerBody.AddForce(Vector3.down * extraGravityForce * _gravityToggle * Time.fixedDeltaTime, ForceMode.Acceleration);
             return;
@@ -178,7 +181,7 @@ public class MovementController : MonoBehaviour
 
             if (isFloor(collision.GetContact(i).normal))
             {
-                IsGrounded = true;
+                OnGround = true;
                 _groundNormal = collision.GetContact(i).normal;
                 CancelInvoke(nameof(StopGrounded));
             }
@@ -190,18 +193,18 @@ public class MovementController : MonoBehaviour
             }
         }
 
-        if(IsGrounded)
+        if(OnGround)
             Invoke(nameof(StopGrounded), Time.deltaTime * 3f);
         
         if(OnWall) Invoke(nameof(StopOnWall), Time.deltaTime * 3f);
     }
-    private void StopGrounded() => IsGrounded = false;
+    private void StopGrounded() => OnGround = false;
     private void StopOnWall() => OnWall = false;
 
     // Jumping
     private void BasicJump()
     {
-        if(IsGrounded && _readyToJump)
+        if(OnGround && _readyToJump)
         {
             _readyToJump = false;
 
@@ -219,12 +222,10 @@ public class MovementController : MonoBehaviour
     // Wall Running
     private void WallRun()
     {
-        if (OnWall && !IsGrounded)
+        if (OnWall && !OnGround)
         {
             // Gravity Reduction depending on speed on the wall
             _gravityToggle = playerBody.linearVelocity.magnitude >= minWallRunSpeed ? 0.4f : 0.8f;
-
-            _leanCameraNow = true;
 
             if (JumpKeyPressed != 0f)
             {
@@ -236,7 +237,6 @@ public class MovementController : MonoBehaviour
         }
         else
         {
-            _leanCameraNow = false;
             _gravityToggle = 1f;
             _readyToJumpOffWall = true;
         }
@@ -245,7 +245,7 @@ public class MovementController : MonoBehaviour
     {
         // Calculating the X and Z COmponent Magnitude to map a dependency of the player velocity to the stick-ing force
         float _horizontalVelocityVectorMagnitude = new Vector3(playerBody.linearVelocity.x, 0f, playerBody.linearVelocity.z).magnitude;
-        float _speedDependency = _horizontalVelocityVectorMagnitude >= minWallRunSpeed ? 1f : _horizontalVelocityVectorMagnitude;
+        float _speedDependency = _horizontalVelocityVectorMagnitude >= minWallRunSpeed ? 1f : _horizontalVelocityVectorMagnitude / minWallRunSpeed;
 
         // Calculating the Final Force Vector
         Vector3 _finalStickingForce = CrossVectorDirection(cameraOrientation.forward, _wallNormal) * _speedDependency * wallStickForce * Time.fixedDeltaTime;
@@ -272,7 +272,7 @@ public class MovementController : MonoBehaviour
                 playerBody.AddForce(new Vector3(0f, cameraOrientation.forward.y, 0f) * wallStickForce * forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
             }
         
-            if(IsGrounded && playerBody.linearVelocity.magnitude <= minWallRunSpeed)
+            if(OnGround && playerBody.linearVelocity.magnitude <= minWallRunSpeed)
                 playerBody.AddForce(new Vector3(0f, cameraOrientation.forward.y, 0f) * wallStickForce * forwardOffTheWallMul * Time.fixedDeltaTime, ForceMode.Impulse);
 
         }
@@ -300,7 +300,7 @@ public class MovementController : MonoBehaviour
     private bool isWall(Vector3 _vector)
     {
         float angle = Vector3.Angle(Vector3.up, _vector);
-        return angle > minWallAngle;
+        return (angle > minWallAngle) && (angle < maxWallAngle);
     }
     private Vector3 CrossVectorDirection(Vector3 _referenceVector, Vector3 _checkVector)
     {
