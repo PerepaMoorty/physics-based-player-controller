@@ -49,8 +49,10 @@ public class MovementController : MonoBehaviour
     [Header("Slope Angles / Extra Gravity")]
     [SerializeField] private float extraGravityForce;
     [SerializeField] private float groundGravityMultiplier;
-    // ...
     [SerializeField] private float maxSlopeAngle;
+    [SerializeField] private float wallGravityMultiplier_BelowThreshold;
+    [SerializeField] private float wallGravityMultiplier_AboveThreshold;
+    // ...
     private Vector3 _groundNormal;
     private float _gravityToggle = 1f;
     [HideInInspector] public Vector3 ContactAngle;
@@ -207,11 +209,10 @@ public class MovementController : MonoBehaviour
         if(OnGround && _readyToJump)
         {
             _readyToJump = false;
+            ResetYVelocity();
 
             playerBody.AddForce(Vector3.up * jumpForce * Time.fixedDeltaTime, ForceMode.Impulse);
             playerBody.AddForce(_groundNormal * jumpForce * slopeJumpMultipler * Time.fixedDeltaTime, ForceMode.Impulse);
-            
-            ResetYVelocity();
         }
 
         if (!_readyToJump)
@@ -225,7 +226,8 @@ public class MovementController : MonoBehaviour
         if (OnWall && !OnGround)
         {
             // Gravity Reduction depending on speed on the wall
-            _gravityToggle = playerBody.linearVelocity.magnitude >= minWallRunSpeed ? 0.4f : 0.8f;
+            _gravityToggle = playerBody.linearVelocity.magnitude >= minWallRunSpeed ? 
+                wallGravityMultiplier_BelowThreshold : wallGravityMultiplier_AboveThreshold;
 
             if (JumpKeyPressed != 0f)
             {
