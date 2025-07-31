@@ -175,6 +175,9 @@ public class MovementController : MonoBehaviour
         // Bit-Wise check to reject other layers
         if ((groundLayer & (1 << collision.gameObject.layer)) == 0) return;
 
+        // Adding "Moving Platform" Compatibility
+        // ...
+
         // Iterating through every collider in the Collision array
         for (int i = 0; i < collision.contactCount; i++)
         {
