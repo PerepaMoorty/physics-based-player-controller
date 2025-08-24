@@ -15,6 +15,10 @@ using UnityEngine;
 /// - Wall Running
 /// - Camera Lean with modifiable camera dutch settings
 /// 
+/// To do
+/// - Add moving platform compatibility
+/// - Add a dynamic max speed, for gaining and storing momentum
+/// 
 /// </summary>
 
 public class MovementController : MonoBehaviour
@@ -29,6 +33,7 @@ public class MovementController : MonoBehaviour
     [SerializeField] private float moveSpeed;
     [SerializeField] private float counterMoveSpeed;
     [SerializeField] private float frictionValue;
+    [SerializeField] private float movingPlatformFrictionValue;
     // ... 
     private float _groundAirMoveMultiplier = 1f;
     private float _counterMoveMultiplier = 1f;
@@ -102,8 +107,8 @@ public class MovementController : MonoBehaviour
         // Camera Lean
         _floatWallDirectionRelative = (_wallNormal.y > 0f ? 1f : -1f);
         cameraRecomposer.Dutch = OnWall && !OnGround ? 
-            Mathf.Lerp(cameraRecomposer.Dutch, wallCameraLeanAngle * _floatWallDirectionRelative, cameraLeanLerpTime) : 
-            Mathf.Lerp(cameraRecomposer.Dutch, 0f, cameraLeanLerpTime * resetCamLeanMultiplier);
+            Mathf.Lerp(cameraRecomposer.Dutch, wallCameraLeanAngle * _floatWallDirectionRelative, cameraLeanLerpTime * Time.deltaTime) : 
+            Mathf.Lerp(cameraRecomposer.Dutch, 0f, cameraLeanLerpTime * resetCamLeanMultiplier * Time.deltaTime);
     }
     private void FixedUpdate()
     {
