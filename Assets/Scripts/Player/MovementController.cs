@@ -17,7 +17,7 @@ using UnityEngine;
 /// 
 /// To do
 /// - Add moving platform compatibility
-/// - Add a dynamic max speed, for gaining and storing momentum
+/// - Add a dynamic max speed
 /// 
 /// </summary>
 
